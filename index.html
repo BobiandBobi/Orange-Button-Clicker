@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orange Button Clicker</title>
+    <style>
+        /* Arkaplanı turuncu yap */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #FF9800;
+        }
+
+        /* Beyaz kareyi stilize et */
+        .container {
+            text-align: center;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+
+        /* Başlık ve puan */
+        h1 {
+            color: #FF9800;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Turuncu düğme */
+        .click-button {
+            background-color: #FF9800;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Sıfırlama düğmesi */
+        #resetButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #666;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* Yan menü */
+        .side-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Karakterler ve Market başlıkları */
+        .side-menu h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .character-list, .market-list {
+            list-style: none;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        /* Market menüsü */
+        .market-menu {
+            display: none;
+            text-align: center;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ccc;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .close-market {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #444;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* Market düğmesi */
+        .market-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #FF9800;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Orange Button Clicker</h1>
+        <p class="score">Puan: <span id="score">0</span></p>
+
+        <!-- Turuncu düğme -->
+        <button class="click-button" id="clickButton">Tıkla!</button>
+
+        <button id="resetButton">Sıfırla</button>
+    </div>
+
+    <!-- Yan menü -->
+    <div class="side-menu">
+        <h2>Karakterler</h2>
+        <ul class="character-list" id="characterList">
+            <li id="character1">100: Jakayla</li>
+            <li id="character2">500: Glenn</li>
+            <li id="character3">1000: Sharky</li>
+            <li id="character4">1500: Russel</li>
+            <li id="character5">2000: Tigry</li>
+            <li id="character6">2500: Asriel</li>
+        </ul>
+        <h2>Market</h2>
+        <button class="market-button" id="openMarketButton">Market</button>
+    </div>
+
+    <!-- Market menüsü -->
+    <div class="market-menu" id="marketMenu">
+        <h2>Market</h2>
+        <div id="gamepassContainer">
+            <!-- Gamepass düğmeleri burada oluşturulacak -->
+        </div>
+        <button class="close-market" id="closeMarketButton">Kapat</button>
+    </div>
+
+    <script>
+        let score = 0;
+        let clickValue = 1;
+        let acquiredCharacters = []; // Alınan karakterleri takip et
+        let purchasedGamepasses = []; // Alınan gamepassleri takip et
+
+        // Gamepass verileri
+        const gamepasses = [
+            { name: "1X Tıklama", cost: 100, value: 1 },
+            { name: "2X Tıklama", cost: 200, value: 2 },
+            { name: "3X Tıklama", cost: 300, value: 3 },
+            { name: "4X Tıklama", cost: 400, value: 4 },
+            { name: "5X Tıklama", cost: 500, value: 5 },
+            { name: "6X Tıklama", cost: 600, value: 6 },
+            { name: "7X Tıklama", cost: 700, value: 7 },
+            { name: "8X Tıklama", cost: 800, value: 8 },
+            { name: "9X Tıklama", cost: 900, value: 9 },
+            { name: "10X Tıklama", cost: 1000, value: 10 }
+        ];
+
+        // Puan ve karakter kontrol fonksiyonu
+        function updateScore() {
+            document.getElementById("score").innerText = score;
+
+            // Karakterlerin açılmasını ve özelliklerin eklenmesini kontrol et
+            if (score >= 100 && !acquiredCharacters.includes("Jakayla")) {
+                acquiredCharacters.push("Jakayla");
+                clickValue += 1;
+                document.getElementById("character1").style.color = "green";
+            }
+            if (score >= 500 && !acquiredCharacters.includes("Glenn")) {
+                acquiredCharacters.push("Glenn");
+                clickValue += 1;
+                document.getElementById("character2").style.color = "green";
+            }
+            if (score >= 1000 && !acquiredCharacters.includes("Sharky")) {
+                acquiredCharacters.push("Sharky");
+                clickValue += 1;
+                document.getElementById("character3").style.color = "green";
+            }
+            if (score >= 1500 && !acquiredCharacters.includes("Russel")) {
+                acquiredCharacters.push("Russel");
+                clickValue += 1;
+                document.getElementById("character4").style.color = "green";
+            }
+            if (score >= 2000 && !acquiredCharacters.includes("Tigry")) {
+                acquiredCharacters.push("Tigry");
+                clickValue += 1;
+                document.getElementById("character5").style.color = "green";
+            }
+            if (score >= 2500 && !acquiredCharacters.includes("Asriel")) {
+                acquiredCharacters.push("Asriel");
+                clickValue += 1;
+                document.getElementById("character6").style.color = "green";
+            }
+        }
+
+        // Tıklama düğmesi
+        document.getElementById("clickButton").addEventListener("click", () => {
+            score += clickValue;
+            updateScore();
+        });
+
+        // Sıfırlama düğmesi
+        document.getElementById("resetButton").addEventListener("click", () => {
+            score = 0;
+            clickValue = 1;
+            acquiredCharacters = [];
+            purchasedGamepasses = [];
+            updateScore();
+            document.querySelectorAll(".character-list li").forEach(item => item.style.color = "black");
+            document.querySelectorAll(".gamepass-button").forEach(button => button.disabled = false);
+        });
+
+        // Market düğmesini açma
+        document.getElementById("openMarketButton").addEventListener("click", () => {
+            document.getElementById("marketMenu").style.display = "block";
+        });
+
+        // Market düğmesini kapatma
+        document.getElementById("closeMarketButton").addEventListener("click", () => {
+            document.getElementById("marketMenu").style.display = "none";
+        });
+
+        // Gamepass satın alma işlevi
+        function buyGamepass(gamepass) {
+            if (score >= gamepass.cost && !purchasedGamepasses.includes(gamepass.name)) {
+                score -= gamepass.cost;
+                clickValue += gamepass.value;
+                purchasedGamepasses.push(gamepass.name);
+                updateScore();
+                alert(gamepass.name + " özelliğini satın aldınız!");
+                document.getElementById(`gamepass-${gamepass.value}`).disabled = true;
+            } else if (purchasedGamepasses.includes(gamepass.name)) {
+                alert("Bu gamepass zaten satın alındı!");
+            } else {
+                alert("Yeterli puanınız yok!");
+            }
+        }
+
+        // Market menüsüne gamepassleri ekle
+        const gamepassContainer = document.getElementById("gamepassContainer");
+        gamepasses.forEach((gamepass, index) => {
+            const button = document.createElement("button");
+            button.className = "market-button gamepass-button";
+            button.id = `gamepass-${gamepass.value}`;
+            button.innerText = `${gamepass.name} (${gamepass.cost} Puan)`;
+            button.onclick = () => buyGamepass(gamepass);
+            gamepassContainer.appendChild(button);
+        });
+    </script>
+</body>
+</html>
